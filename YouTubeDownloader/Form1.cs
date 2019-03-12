@@ -95,6 +95,9 @@ namespace YouTubeDownloader {
         }
 
         private void Download(String url, DownloadType type) {
+            String height = "1080";
+            String ext = "mp4";
+
             lblStatus.Text = "Downloading...";
 
             String destination = type == DownloadType.Video
@@ -110,9 +113,10 @@ namespace YouTubeDownloader {
                 process.StartInfo.FileName = "youtube-dl.exe";
 
                 process.StartInfo.Arguments = tbURL.Text + " -o " + destination + "\\%(title)s.%(ext)s";
-
                 if (type == DownloadType.Audio) {
                     process.StartInfo.Arguments += " -x --audio-format mp3";
+                } else if (type == DownloadType.Video) {
+                    process.StartInfo.Arguments += $" -f bestvideo[height<={height}][ext={ext}]+bestaudio/best[height<={height}][ext={ext}]/best";
                 }
 
                 process.StartInfo.CreateNoWindow = true;
