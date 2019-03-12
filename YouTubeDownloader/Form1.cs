@@ -15,13 +15,15 @@ namespace YouTubeDownloader {
     }
 
     public partial class Form1 : Form {
+        private static String architecture = Environment.Is64BitProcess ? "win64" : "win32";
+
         private static Tuple<String[], String>[] DEPENDENCIES = {
             new Tuple<String[], String>(
                 new String[]{ "youtube-dl.exe" },
                 "https://yt-dl.org/downloads/latest/youtube-dl.exe"),
             new Tuple<String[], String>(
                 new String[]{ "ffmpeg.exe", "ffprobe.exe" },
-                "https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.zip"),
+                $"https://ffmpeg.zeranoe.com/builds/{architecture}/static/ffmpeg-latest-{architecture}-static.zip"),
         };
 
         public Form1() {
@@ -42,6 +44,7 @@ namespace YouTubeDownloader {
             }
 
             btnUpdate.Enabled = false;
+            btnVideo.Enabled = false;
             btnAudio.Enabled = false;
             lblStatus.Text = "Downloading dependencies...";
             pbDownload.Maximum = dependencies.Count() * 100;
@@ -86,6 +89,7 @@ namespace YouTubeDownloader {
             }
 
             lblStatus.Text = "Ready.";
+            btnVideo.Enabled = true;
             btnAudio.Enabled = true;
             btnUpdate.Enabled = true;
         }
