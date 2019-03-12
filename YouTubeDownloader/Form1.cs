@@ -1,49 +1,91 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace YouTubeDownloader {
     public partial class Form1 : Form {
-        // TODO: Download ffmpeg.
-        private String[] dependencies = {
-            "https://yt-dl.org/downloads/latest/youtube-dl.exe",
+        private Tuple<String, String>[] DEPENDENCIES = {
+            new Tuple<String, String>("youtube-dl.exe", "https://yt-dl.org/downloads/latest/youtube-dl.exe"),
+            new Tuple<String, String>("ffmpeg.exe", "https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.zip"),
         };
 
         public Form1() {
             InitializeComponent();
         }
 
-        private void Form1_Shown(object sender, EventArgs e) {
-            WebClient client = new WebClient();
+        private void Form1_Shown(object sender, EventArgs ea) {
+            DownloadDependencies(false);
+        }
 
-            foreach (String url in dependencies) {
-                String filename = url.Split('/').Last();
+        private async void DownloadDependencies(bool force) {
+            List<Tuple<String, String>> dependencies = DEPENDENCIES
+                .Where(dependency => force || !File.Exists(dependency.Item1))
+                .ToList();
 
-                if (File.Exists(filename) == true) {
+            if (dependencies.Count == 0) {
+                return;
+            }
+
+            btnUpdate.Enabled = false;
+            btnDownload.Enabled = false;
+            lblStatus.Text = "Downloading dependencies...";
+            pbDownload.Maximum = dependencies.Count() * 100;
+            pbDownload.Visible = true;
+
+            IEnumerable<Task> tasks = dependencies.Select(dependency => {
+                String url = dependency.Item2;
+                String destination = url.Split('/').Last();
+
+                WebClient client = new WebClient();
+                int progress = 0;
+
+                client.DownloadProgressChanged += (s, e) =>
+                {
+                    pbDownload.Value += e.ProgressPercentage - progress;
+                    progress = e.ProgressPercentage;
+                };
+
+                return client.DownloadFileTaskAsync(new Uri(url), destination);
+            });
+
+            await Task.WhenAll(tasks);
+
+            pbDownload.Visible = false;
+            lblStatus.Text = "Installing dependencies...";
+
+            foreach (Tuple<String, String> dependency in dependencies) {
+                String filename = dependency.Item1;
+                String archive = dependency.Item2.Split('/').Last();
+
+                if (!archive.EndsWith(".zip")) {
                     continue;
                 }
 
-                // TODO: Progress bar and completed.
-                client.DownloadFileAsync(new Uri(url), filename);
-                pbDownload.Visible = true;
+                using (ZipArchive zip = ZipFile.OpenRead(archive)) {
+                    ZipArchiveEntry entry = zip.Entries.Where(e => e.Name == filename).First();
+                    entry.ExtractToFile(filename, true);
+                }
+
+                File.Delete(archive);
             }
-        }
 
-        private void DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e) {
-            pbDownload.Value = e.ProgressPercentage;
-        }
-
-        private void DownloadFileCompleted(object sender, EventArgs e) {
-            pbDownload.Visible = false;
-            pbDownload.Value = 0;
             lblStatus.Text = "Ready.";
+            btnDownload.Enabled = true;
+            btnUpdate.Enabled = true;
         }
 
         private void tbURL_Click(object sender, EventArgs e) {
             (sender as TextBox).SelectAll();
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e) {
+            DownloadDependencies(true);
         }
 
         private void btnDownload_Click(object sender, EventArgs e) {
@@ -61,34 +103,6 @@ namespace YouTubeDownloader {
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.FileName = "youtube-dl.exe";
                 process.StartInfo.Arguments = "-f bestaudio -x --audio-format mp3 " + tbURL.Text + " -o " + destination + "\\YouTube\\%(title)s.%(ext)s";
-                process.StartInfo.CreateNoWindow = true;
-
-                process.EnableRaisingEvents = true;
-                process.Exited += (_sender, _e) => {
-                    if (process.ExitCode == 0) {
-                        lblStatus.Text = "Ready.";
-                        return;
-                    }
-
-                    lblStatus.Text = "Error!";
-                };
-
-                process.Start();
-                process.WaitForExit();
-            } catch (Exception ex) {
-                lblStatus.Text = "Error!";
-                MessageBox.Show(ex.Message);
-            }
-        }
-
-        private void btnUpdate_Click(object sender, EventArgs e) {
-            lblStatus.Text = "Updating...";
-
-            try {
-                Process process = new Process();
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.FileName = "youtube-dl.exe";
-                process.StartInfo.Arguments = "-U";
                 process.StartInfo.CreateNoWindow = true;
 
                 process.EnableRaisingEvents = true;
