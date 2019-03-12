@@ -25,12 +25,13 @@
         private void InitializeComponent() {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.tbURL = new System.Windows.Forms.TextBox();
-            this.btnDownload = new System.Windows.Forms.Button();
+            this.btnAudio = new System.Windows.Forms.Button();
             this.lblURL = new System.Windows.Forms.Label();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.pbDownload = new System.Windows.Forms.ToolStripProgressBar();
             this.btnUpdate = new System.Windows.Forms.Button();
+            this.btnVideo = new System.Windows.Forms.Button();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -42,15 +43,15 @@
             this.tbURL.TabIndex = 0;
             this.tbURL.Click += new System.EventHandler(this.tbURL_Click);
             // 
-            // btnDownload
+            // btnAudio
             // 
-            this.btnDownload.Location = new System.Drawing.Point(237, 39);
-            this.btnDownload.Name = "btnDownload";
-            this.btnDownload.Size = new System.Drawing.Size(75, 23);
-            this.btnDownload.TabIndex = 1;
-            this.btnDownload.Text = "Download";
-            this.btnDownload.UseVisualStyleBackColor = true;
-            this.btnDownload.Click += new System.EventHandler(this.btnDownload_Click);
+            this.btnAudio.Location = new System.Drawing.Point(252, 39);
+            this.btnAudio.Name = "btnAudio";
+            this.btnAudio.Size = new System.Drawing.Size(60, 23);
+            this.btnAudio.TabIndex = 1;
+            this.btnAudio.Text = "Audio";
+            this.btnAudio.UseVisualStyleBackColor = true;
+            this.btnAudio.Click += new System.EventHandler(this.btnAudio_Click);
             // 
             // lblURL
             // 
@@ -96,15 +97,26 @@
             this.btnUpdate.UseVisualStyleBackColor = true;
             this.btnUpdate.Click += new System.EventHandler(this.btnUpdate_Click);
             // 
+            // btnVideo
+            // 
+            this.btnVideo.Location = new System.Drawing.Point(186, 39);
+            this.btnVideo.Name = "btnVideo";
+            this.btnVideo.Size = new System.Drawing.Size(60, 23);
+            this.btnVideo.TabIndex = 5;
+            this.btnVideo.Text = "Video";
+            this.btnVideo.UseVisualStyleBackColor = true;
+            this.btnVideo.Click += new System.EventHandler(this.btnVideo_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(324, 93);
+            this.Controls.Add(this.btnVideo);
             this.Controls.Add(this.btnUpdate);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.lblURL);
-            this.Controls.Add(this.btnDownload);
+            this.Controls.Add(this.btnAudio);
             this.Controls.Add(this.tbURL);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -122,12 +134,13 @@
         #endregion
 
         private System.Windows.Forms.TextBox tbURL;
-        private System.Windows.Forms.Button btnDownload;
+        private System.Windows.Forms.Button btnAudio;
         private System.Windows.Forms.Label lblURL;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel lblStatus;
         private System.Windows.Forms.ToolStripProgressBar pbDownload;
         private System.Windows.Forms.Button btnUpdate;
+        private System.Windows.Forms.Button btnVideo;
     }
 }
 

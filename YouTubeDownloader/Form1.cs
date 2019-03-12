@@ -9,8 +9,13 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace YouTubeDownloader {
+    enum DownloadType {
+        Audio,
+        Video,
+    }
+
     public partial class Form1 : Form {
-        private Tuple<String, String>[] DEPENDENCIES = {
+        private static Tuple<String, String>[] DEPENDENCIES = {
             new Tuple<String, String>("youtube-dl.exe", "https://yt-dl.org/downloads/latest/youtube-dl.exe"),
             new Tuple<String, String>("ffmpeg.exe", "https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.zip"),
         };
@@ -33,7 +38,7 @@ namespace YouTubeDownloader {
             }
 
             btnUpdate.Enabled = false;
-            btnDownload.Enabled = false;
+            btnAudio.Enabled = false;
             lblStatus.Text = "Downloading dependencies...";
             pbDownload.Maximum = dependencies.Count() * 100;
             pbDownload.Visible = true;
@@ -76,37 +81,35 @@ namespace YouTubeDownloader {
             }
 
             lblStatus.Text = "Ready.";
-            btnDownload.Enabled = true;
+            btnAudio.Enabled = true;
             btnUpdate.Enabled = true;
         }
 
-        private void tbURL_Click(object sender, EventArgs e) {
-            (sender as TextBox).SelectAll();
-        }
-
-        private void btnUpdate_Click(object sender, EventArgs e) {
-            DownloadDependencies(true);
-        }
-
-        private void btnDownload_Click(object sender, EventArgs e) {
-            if (tbURL.Text == "") {
-                return;
-            }
-
+        private void Download(String url, DownloadType type) {
             lblStatus.Text = "Downloading...";
 
-            String destination = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
-            // TODO: Create YouTube folder.
+            String destination = type == DownloadType.Video
+                ? Environment.GetFolderPath(Environment.SpecialFolder.MyVideos)
+                : Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+            destination = Path.Combine(destination, "YouTube");
+
+            Directory.CreateDirectory(destination);
 
             try {
                 Process process = new Process();
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.FileName = "youtube-dl.exe";
-                process.StartInfo.Arguments = "-f bestaudio -x --audio-format mp3 " + tbURL.Text + " -o " + destination + "\\YouTube\\%(title)s.%(ext)s";
+
+                process.StartInfo.Arguments = tbURL.Text + " -o " + destination + "\\%(title)s.%(ext)s";
+
+                if (type == DownloadType.Audio) {
+                    process.StartInfo.Arguments += " -x --audio-format mp3";
+                }
+
                 process.StartInfo.CreateNoWindow = true;
 
                 process.EnableRaisingEvents = true;
-                process.Exited += (_sender, _e) => {
+                process.Exited += (s, e) => {
                     if (process.ExitCode == 0) {
                         lblStatus.Text = "Ready.";
                         return;
@@ -121,6 +124,30 @@ namespace YouTubeDownloader {
                 lblStatus.Text = "Error!";
                 MessageBox.Show(ex.Message);
             }
+        }
+
+        private void tbURL_Click(object sender, EventArgs ea) {
+            (sender as TextBox).SelectAll();
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e) {
+            DownloadDependencies(true);
+        }
+
+        private void btnAudio_Click(object sender, EventArgs ea) {
+            if (tbURL.Text == "") {
+                return;
+            }
+
+            Download(tbURL.Text, DownloadType.Audio);
+        }
+
+        private void btnVideo_Click(object sender, EventArgs e) {
+            if (tbURL.Text == "") {
+                return;
+            }
+
+            Download(tbURL.Text, DownloadType.Video);
         }
     }
 }
