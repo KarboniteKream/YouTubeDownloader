@@ -15,9 +15,13 @@ namespace YouTubeDownloader {
     }
 
     public partial class Form1 : Form {
-        private static Tuple<String, String>[] DEPENDENCIES = {
-            new Tuple<String, String>("youtube-dl.exe", "https://yt-dl.org/downloads/latest/youtube-dl.exe"),
-            new Tuple<String, String>("ffmpeg.exe", "https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.zip"),
+        private static Tuple<String[], String>[] DEPENDENCIES = {
+            new Tuple<String[], String>(
+                new String[]{ "youtube-dl.exe" },
+                "https://yt-dl.org/downloads/latest/youtube-dl.exe"),
+            new Tuple<String[], String>(
+                new String[]{ "ffmpeg.exe", "ffprobe.exe" },
+                "https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.zip"),
         };
 
         public Form1() {
@@ -29,11 +33,11 @@ namespace YouTubeDownloader {
         }
 
         private async void DownloadDependencies(bool force) {
-            List<Tuple<String, String>> dependencies = DEPENDENCIES
-                .Where(dependency => force || !File.Exists(dependency.Item1))
-                .ToList();
+            Tuple<String[], String>[] dependencies = DEPENDENCIES
+                .Where(dependency => force || dependency.Item1.Any(filename => !File.Exists(filename)))
+                .ToArray();
 
-            if (dependencies.Count == 0) {
+            if (dependencies.Length == 0) {
                 return;
             }
 
@@ -64,8 +68,8 @@ namespace YouTubeDownloader {
             pbDownload.Visible = false;
             lblStatus.Text = "Installing dependencies...";
 
-            foreach (Tuple<String, String> dependency in dependencies) {
-                String filename = dependency.Item1;
+            foreach (Tuple<String[], String> dependency in dependencies) {
+                String[] files = dependency.Item1;
                 String archive = dependency.Item2.Split('/').Last();
 
                 if (!archive.EndsWith(".zip")) {
@@ -73,8 +77,9 @@ namespace YouTubeDownloader {
                 }
 
                 using (ZipArchive zip = ZipFile.OpenRead(archive)) {
-                    ZipArchiveEntry entry = zip.Entries.Where(e => e.Name == filename).First();
-                    entry.ExtractToFile(filename, true);
+                    foreach (ZipArchiveEntry entry in zip.Entries.Where(e => files.Contains(e.Name))) {
+                        entry.ExtractToFile(entry.Name, true);
+                    }
                 }
 
                 File.Delete(archive);
