@@ -99,6 +99,9 @@ namespace YouTubeDownloader {
             String ext = "mp4";
 
             lblStatus.Text = "Downloading...";
+            btnUpdate.Enabled = false;
+            btnVideo.Enabled = false;
+            btnAudio.Enabled = false;
 
             String destination = type == DownloadType.Video
                 ? Environment.GetFolderPath(Environment.SpecialFolder.MyVideos)
@@ -123,6 +126,10 @@ namespace YouTubeDownloader {
 
                 process.EnableRaisingEvents = true;
                 process.Exited += (s, e) => {
+                    btnUpdate.Enabled = true;
+                    btnVideo.Enabled = true;
+                    btnAudio.Enabled = true;
+
                     if (process.ExitCode == 0) {
                         lblStatus.Text = "Ready.";
                         return;
@@ -134,6 +141,10 @@ namespace YouTubeDownloader {
                 process.Start();
                 process.WaitForExit();
             } catch (Exception ex) {
+                btnUpdate.Enabled = true;
+                btnVideo.Enabled = true;
+                btnAudio.Enabled = true;
+
                 lblStatus.Text = "Error!";
                 MessageBox.Show(ex.Message);
             }
