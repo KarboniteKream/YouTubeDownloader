@@ -15,14 +15,14 @@ namespace YouTubeDownloader {
     }
 
     public partial class Form1 : Form {
-        private static String architecture = Environment.Is64BitProcess ? "win64" : "win32";
+        private static string architecture = Environment.Is64BitProcess ? "win64" : "win32";
 
-        private static Tuple<String[], String>[] DEPENDENCIES = {
-            new Tuple<String[], String>(
-                new String[]{ "youtube-dl.exe" },
+        private static Tuple<string[], string>[] DEPENDENCIES = {
+            new Tuple<string[], string>(
+                new string[]{ "youtube-dl.exe" },
                 "https://yt-dl.org/downloads/latest/youtube-dl.exe"),
-            new Tuple<String[], String>(
-                new String[]{ "ffmpeg.exe", "ffprobe.exe" },
+            new Tuple<string[], string>(
+                new string[]{ "ffmpeg.exe", "ffprobe.exe" },
                 $"https://ffmpeg.zeranoe.com/builds/{architecture}/static/ffmpeg-latest-{architecture}-static.zip"),
         };
 
@@ -30,12 +30,12 @@ namespace YouTubeDownloader {
             InitializeComponent();
         }
 
-        private void Form1_Shown(object sender, EventArgs ea) {
+        private void Form1_Shown(object sender, EventArgs e) {
             DownloadDependencies(false);
         }
 
         private async void DownloadDependencies(bool force) {
-            Tuple<String[], String>[] dependencies = DEPENDENCIES
+            Tuple<string[], string>[] dependencies = DEPENDENCIES
                 .Where(dependency => force || dependency.Item1.Any(filename => !File.Exists(filename)))
                 .ToArray();
 
@@ -51,14 +51,13 @@ namespace YouTubeDownloader {
             pbDownload.Visible = true;
 
             IEnumerable<Task> tasks = dependencies.Select(dependency => {
-                String url = dependency.Item2;
-                String destination = url.Split('/').Last();
+                string url = dependency.Item2;
+                string destination = url.Split('/').Last();
 
                 WebClient client = new WebClient();
                 int progress = 0;
 
-                client.DownloadProgressChanged += (s, e) =>
-                {
+                client.DownloadProgressChanged += (s, e) => {
                     pbDownload.Value += e.ProgressPercentage - progress;
                     progress = e.ProgressPercentage;
                 };
@@ -71,9 +70,9 @@ namespace YouTubeDownloader {
             pbDownload.Visible = false;
             lblStatus.Text = "Installing dependencies...";
 
-            foreach (Tuple<String[], String> dependency in dependencies) {
-                String[] files = dependency.Item1;
-                String archive = dependency.Item2.Split('/').Last();
+            foreach (Tuple<string[], string> dependency in dependencies) {
+                string[] files = dependency.Item1;
+                string archive = dependency.Item2.Split('/').Last();
 
                 if (!archive.EndsWith(".zip")) {
                     continue;
@@ -94,63 +93,67 @@ namespace YouTubeDownloader {
             btnUpdate.Enabled = true;
         }
 
-        private void Download(String url, DownloadType type) {
-            String height = "1080";
-            String ext = "mp4";
+        private void Download(string url, DownloadType type) {
+            string height = "1080";
+            string ext = "mp4";
 
             lblStatus.Text = "Downloading...";
             btnUpdate.Enabled = false;
             btnVideo.Enabled = false;
             btnAudio.Enabled = false;
+            rtbConsole.Clear();
 
-            String destination = type == DownloadType.Video
-                ? Environment.GetFolderPath(Environment.SpecialFolder.MyVideos)
-                : Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
-            destination = Path.Combine(destination, "YouTube");
+            Environment.SpecialFolder folder =
+                type == DownloadType.Video
+                ? Environment.SpecialFolder.MyVideos
+                : Environment.SpecialFolder.MyMusic;
 
+            string destination = Path.Combine(Environment.GetFolderPath(folder), "YouTube");
             Directory.CreateDirectory(destination);
 
-            try {
-                Process process = new Process();
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.FileName = "youtube-dl.exe";
+            Process process = new Process();
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
 
-                process.StartInfo.Arguments = tbURL.Text + " -o " + destination + "\\%(title)s.%(ext)s";
-                if (type == DownloadType.Audio) {
-                    process.StartInfo.Arguments += " -x --audio-format mp3";
-                } else if (type == DownloadType.Video) {
-                    process.StartInfo.Arguments += $" -f bestvideo[height<={height}][ext={ext}]+bestaudio/best[height<={height}][ext={ext}]/best";
-                }
+            process.StartInfo.FileName = "youtube-dl.exe";
+            process.StartInfo.Arguments = tbURL.Text + " -o " + destination + "\\%(title)s.%(ext)s";
 
-                process.StartInfo.CreateNoWindow = true;
+            if (type == DownloadType.Audio) {
+                process.StartInfo.Arguments += " -x --audio-format mp3";
+            } else if (type == DownloadType.Video) {
+                process.StartInfo.Arguments += $" -f bestvideo[height<={height}][ext={ext}]+bestaudio/best[height<={height}][ext={ext}]/best";
+            }
 
-                process.EnableRaisingEvents = true;
-                process.Exited += (s, e) => {
+            process.StartInfo.RedirectStandardOutput = true;
+            process.OutputDataReceived += (s, e) => rtbConsole_Append(e.Data);
+
+            process.StartInfo.RedirectStandardError = true;
+            process.ErrorDataReceived += (s, e) => rtbConsole_Append(e.Data);
+
+            process.EnableRaisingEvents = true;
+            process.Exited += (s, e) => {
+                Invoke(new Action(() => {
                     btnUpdate.Enabled = true;
                     btnVideo.Enabled = true;
                     btnAudio.Enabled = true;
 
-                    if (process.ExitCode == 0) {
-                        lblStatus.Text = "Ready.";
-                        return;
-                    }
+                    rtbConsole.AppendText("Done.");
+                    lblStatus.Text = process.ExitCode == 0 ? "Ready." : "Error!";
+                }));
+            };
 
-                    lblStatus.Text = "Error!";
-                };
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+        }
 
-                process.Start();
-                process.WaitForExit();
-            } catch (Exception ex) {
-                btnUpdate.Enabled = true;
-                btnVideo.Enabled = true;
-                btnAudio.Enabled = true;
-
-                lblStatus.Text = "Error!";
-                MessageBox.Show(ex.Message);
+        private void rtbConsole_Append(String text) {
+            if (!String.IsNullOrEmpty(text)) {
+                Invoke(new Action(() => rtbConsole.AppendText(text + '\n')));
             }
         }
 
-        private void tbURL_Click(object sender, EventArgs ea) {
+        private void tbURL_Click(object sender, EventArgs e) {
             (sender as TextBox).SelectAll();
         }
 
@@ -158,7 +161,7 @@ namespace YouTubeDownloader {
             DownloadDependencies(true);
         }
 
-        private void btnAudio_Click(object sender, EventArgs ea) {
+        private void btnAudio_Click(object sender, EventArgs e) {
             if (tbURL.Text == "") {
                 return;
             }
