@@ -121,7 +121,7 @@ namespace YouTubeDownloader {
             if (type == DownloadType.Audio) {
                 process.StartInfo.Arguments += " -x --audio-format mp3";
             } else if (type == DownloadType.Video) {
-                process.StartInfo.Arguments += $" -f bestvideo[height<={height}][ext={ext}]+bestaudio/best[height<={height}][ext={ext}]/best";
+                process.StartInfo.Arguments += $" -f bestvideo[height<={height}][ext={ext}]+bestaudio --postprocessor-args \"-acodec mp3 -vcodec copy\"";
             }
 
             process.StartInfo.RedirectStandardOutput = true;
