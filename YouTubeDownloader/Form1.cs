@@ -15,15 +15,13 @@ namespace YouTubeDownloader {
     }
 
     public partial class Form1 : Form {
-        private static string architecture = Environment.Is64BitProcess ? "win64" : "win32";
-
         private static Tuple<string[], string>[] DEPENDENCIES = {
             new Tuple<string[], string>(
                 new string[]{ "youtube-dl.exe" },
-                "https://yt-dl.org/downloads/latest/youtube-dl.exe"),
+                "https://youtube-dl.org/downloads/latest/youtube-dl.exe"),
             new Tuple<string[], string>(
                 new string[]{ "ffmpeg.exe", "ffprobe.exe" },
-                $"https://ffmpeg.zeranoe.com/builds/{architecture}/static/ffmpeg-latest-{architecture}-static.zip"),
+                "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"),
         };
 
         public Form1() {
@@ -116,7 +114,7 @@ namespace YouTubeDownloader {
             process.StartInfo.CreateNoWindow = true;
 
             process.StartInfo.FileName = "youtube-dl.exe";
-            process.StartInfo.Arguments = tbURL.Text + " -o " + destination + "\\%(title)s.%(ext)s";
+            process.StartInfo.Arguments = url + " -o " + destination + "\\%(title)s.%(ext)s";
 
             if (type == DownloadType.Audio) {
                 process.StartInfo.Arguments += " -x --audio-format mp3";
