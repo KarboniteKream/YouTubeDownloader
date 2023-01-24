@@ -17,8 +17,8 @@ namespace YouTubeDownloader {
     public partial class Form1 : Form {
         private static Tuple<string[], string>[] DEPENDENCIES = {
             new Tuple<string[], string>(
-                new string[]{ "youtube-dl.exe" },
-                "https://youtube-dl.org/downloads/latest/youtube-dl.exe"),
+                new string[]{ "yt-dlp.exe" },
+                "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"),
             new Tuple<string[], string>(
                 new string[]{ "ffmpeg.exe", "ffprobe.exe" },
                 "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"),
@@ -113,7 +113,7 @@ namespace YouTubeDownloader {
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
 
-            process.StartInfo.FileName = "youtube-dl.exe";
+            process.StartInfo.FileName = "yt-dlp.exe";
             process.StartInfo.Arguments = url + " -o " + destination + "\\%(title)s.%(ext)s";
 
             if (type == DownloadType.Audio) {
